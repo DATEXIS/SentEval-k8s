@@ -1,0 +1,3 @@
+# data files
+data/downstream/**
+!data/downstream/get_transfer_data.bash
