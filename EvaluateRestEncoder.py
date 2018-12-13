@@ -36,7 +36,7 @@ def arora(word_vectors, term_frequencies, a=.001):
     “A Simple but Tough-to-Beat Baseline for Sentence Embeddings.” - Arora et al. - 2017
     Since word_vectors contain all vectors in a 2d array, the sentence split information must be performed by
     the term_frequencies array.
-    :param a:
+    :param a: Smoothing parameter a (default is 0.001)
     :param word_vectors: list[n, dim]: ordered word vectors word n (for all sentences)
     :param term_frequencies: list[i, n]: ordered term frequencies for sentence i and token n within that sentence
     :return: [i, :] sentence embeddings for sentence i
@@ -121,7 +121,8 @@ def get_vectors_from_encoder(batch):
         else:
             should_connect = False
     vectors = r.json()
-    vectors = np.asarray(vectors, dtype=np.float32)
+    if len(batch) == 1:  # https://github.com/SchmaR/ELMo-Rest/issues/8
+        vectors = [vectors]
     return vectors
 
 
@@ -137,13 +138,15 @@ def batcher(params, batch):
         for token in sent:
             sent_tf.append(params.tf_dictionary[token])
         batch_term_frequencies.append(sent_tf)
-    batch_term_frequencies = np.asarray(batch_term_frequencies, dtype=np.float32)
     batch_word_vectors = get_vectors_from_encoder(batch)
-    batch_word_vectors = batch_word_vectors[:, 1]  # use second layer elmo layer  # TODO THIS IS ELMO SPECIFIC, REMOVE!
-
-    sentence_embeddings = arora(batch_word_vectors, batch_term_frequencies, a=0.001)
-
-    return sentence_embeddings
+    batch_word_vectors_flattened = []
+    for sentence_word_vectors in batch_word_vectors:
+        for word_vector in sentence_word_vectors:
+            batch_word_vectors_flattened.append(np.asarray(word_vector, dtype=np.float64))
+    if ENCODER_TYPE == 'TOKEN':
+        return arora(batch_word_vectors_flattened, batch_term_frequencies, a=0.001)
+    if ENCODER_TYPE == 'SENTENCE':
+        return batch_word_vectors
 
 
 # Set params for SentEval
@@ -160,6 +163,15 @@ if __name__ == "__main__":
     except KeyError:
         logger.error("Encoder URL must be specified using the ENCODERURL environment variable!")
         exit(1)
+    try:
+        ENCODER_TYPE = os.environ['ENCODERTYPE']
+    except KeyError:
+        logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
+        exit(1)
+    if not (ENCODER_TYPE == "TOKEN" or ENCODER_TYPE == "SENTENCE"):
+        logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
+        exit(1)
+
     se = senteval.engine.SE(params_senteval, batcher, prepare)
     transfer_tasks = ['STS12', 'STS13', 'STS14', 'STS15', 'STS16',
                       'MR', 'CR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC',
