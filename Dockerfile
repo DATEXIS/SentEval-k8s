@@ -14,22 +14,27 @@ MAINTAINER Tom Oberhauser <toberhauser@beuth-hochschule.de>
 RUN apt-get update && apt-get install -y \
   git \
   software-properties-common \
-  python-dev \
-  python-pip \
+  python3-dev \
+  python3-pip \
+  python3-numpy\
+  python3-scipy\
   cabextract \
   sudo \
   curl \
   unzip
 
 # install dependencies
-RUN pip install numpy scipy scikit-learn sklearn torch requests theano lasagne
+RUN pip3 install scikit-learn sklearn torch requests
+RUN pip3 install --upgrade https://github.com/Theano/Theano/archive/master.zip
+RUN pip3 install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
+
 
 WORKDIR /root/
 
 # SentEval
 # RUN git clone https://github.com/devfoo-one/SentEval.git
 
-COPY . /
+COPY . /root/
 
 # download dataset and models
 
@@ -43,4 +48,8 @@ COPY . /
 CMD nvidia-smi -q
 
 # defaults command
-CMD ["bash"]
+# CMD ["bash"]
+
+
+
+CMD ["python3", "EvaluateRestEncoder.py"]

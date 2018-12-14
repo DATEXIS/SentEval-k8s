@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 from __future__ import absolute_import, division, unicode_literals
 
 import json
@@ -13,10 +15,9 @@ import logging
 import requests
 
 from SIF.src import SIF_embedding
-from senteval import utils
 
 """ ---------- CONFIG ------------ """
-PATH_TO_SENTEVAL = 'SentEval'
+PATH_TO_SENTEVAL = 'SentEval/'
 PATH_TO_DATA = 'SentEval/data'
 REQUEST_HEADERS = {
     'accept': 'application/json',
@@ -61,7 +62,7 @@ def arora(word_vectors, term_frequencies, a=.001):
             indices[s_i, t_i] = index
             index += 1
 
-    params = utils.dotdict({'rmpc': 1})  # remove 1st principal component
+    params = senteval.utils.dotdict({'rmpc': 1})  # remove 1st principal component
 
     # Arora expects ONE LARGE WORD VECTOR ARRAY and the INDICES MUST BE OUT OF THIS ARRAY FOR ALL SENTENCES!
     word_vectors = np.asarray(word_vectors, dtype=np.float64)
