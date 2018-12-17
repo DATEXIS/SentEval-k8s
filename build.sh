@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# remove SentEval data if already existing (otherwise download scripts fail)
+# remove SentEval data if already existing (otherwise download script fails)
 find SentEval/data/downstream/ -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
 
 # Download SentEval downstream task data

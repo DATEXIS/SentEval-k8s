@@ -2,8 +2,10 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+import datetime
 import json
 import os
+import re
 import sys
 import time
 from collections import defaultdict
@@ -23,6 +25,7 @@ REQUEST_HEADERS = {
     'accept': 'application/json',
     'Content-Type': 'application/json'
 }
+PATH_TO_RESULTS = 'results/'
 MAX_CONNECTION_RETRIES = 30
 
 logger = logging.getLogger(__name__)
@@ -122,7 +125,7 @@ def get_vectors_from_encoder(batch):
         else:
             should_connect = False
     vectors = r.json()
-    if len(batch) == 1:  # https://github.com/SchmaR/ELMo-Rest/issues/8
+    if len(batch) == 1:  # TODO https://github.com/SchmaR/ELMo-Rest/issues/8
         vectors = [vectors]
     return vectors
 
@@ -150,6 +153,16 @@ def batcher(params, batch):
         return batch_word_vectors
 
 
+def generate_filename(encoder_url):
+    filename = re.sub(r'http[s]*://', ' ', encoder_url)
+    filename = filename.replace('/', '-')
+    filename = filename.replace(':', '_')
+    filename = ''.join([c for c in filename if re.match(r'\w', c) or c == '-' or c == '_'])
+    filename = datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + filename + '.json'
+    filename = PATH_TO_RESULTS + filename
+    return filename
+
+
 # Set params for SentEval
 params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 5}
 params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
@@ -159,6 +172,8 @@ params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 12
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
 if __name__ == "__main__":
+    ENCODER_URL = ''
+    ENCODER_TYPE = ''
     try:
         ENCODER_URL = os.environ['ENCODERURL']
     except KeyError:
@@ -169,9 +184,17 @@ if __name__ == "__main__":
     except KeyError:
         logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
         exit(1)
+
+    if len(ENCODER_URL) == 0 or len(ENCODER_TYPE) == 0:
+        raise RuntimeError(
+            'ENCODER_URL ("{}") or ENCODER_TYPE ("{}") have not been specified'.format(ENCODER_URL, ENCODER_TYPE))
+
     if not (ENCODER_TYPE == "TOKEN" or ENCODER_TYPE == "SENTENCE"):
         logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
         exit(1)
+
+    if not os.path.isdir(PATH_TO_RESULTS):
+        raise RuntimeError('Result path {} not found!'.format(PATH_TO_RESULTS))
 
     se = senteval.engine.SE(params_senteval, batcher, prepare)
     transfer_tasks = ['STS12', 'STS13', 'STS14', 'STS15', 'STS16',
@@ -181,7 +204,8 @@ if __name__ == "__main__":
                       'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
                       'OddManOut', 'CoordinationInversion']
     results = se.eval(transfer_tasks)
-    outfile = open("RESTEncoderResults.json", "w")  # TODO BETTER PERSISTENCE
+    filename = generate_filename(ENCODER_URL)
+    outfile = open(filename, "w")
     outfile.write(json.dumps(results))
     outfile.close()
-    print(results)
+    logger.info('Evaluation of {} finished.'.format(ENCODER_URL))
