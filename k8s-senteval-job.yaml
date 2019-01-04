@@ -1,0 +1,22 @@
+# TODO ADD ENV FOR CONTAINER
+# TODO MOUNT RESULTS PATH
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: SentEval-Job
+spec:
+  template:
+    spec:
+      containers:
+      - name: senteval-k8s
+        image: senteval-k8s
+        volumeMounts:
+          -  name: results
+             mountPath: /root/results
+      imagePullSecrets:
+        - name: private-registry-auth
+    volumes:
+      - name: results
+        hostPath:
+          path: /dfs/....
