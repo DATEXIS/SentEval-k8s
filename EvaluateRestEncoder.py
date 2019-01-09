@@ -154,13 +154,13 @@ def batcher(params, batch):
 
 
 def generate_filename(encoder_url):
-    filename = re.sub(r'http[s]*://', ' ', encoder_url)
-    filename = filename.replace('/', '-')
-    filename = filename.replace(':', '_')
-    filename = ''.join([c for c in filename if re.match(r'\w', c) or c == '-' or c == '_'])
-    filename = datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + filename + '.json'
-    filename = PATH_TO_RESULTS + filename
-    return filename
+    fn = re.sub(r'http[s]*://', ' ', encoder_url)
+    fn = fn.replace(':', '_')
+    fn = fn.replace('/', '-')
+    fn = ''.join([c for c in fn if re.match(r'\w', c) or c == '-' or c == '_'])
+    fn = datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + fn + '.json'
+    fn = PATH_TO_RESULTS + fn
+    return fn
 
 
 # Set params for SentEval
