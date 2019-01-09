@@ -163,6 +163,30 @@ def generate_filename(encoder_url):
     return fn
 
 
+def serialization_helper(results):
+    """
+    Prepares a result object for serialization
+    :param results: Results object as returned by SentEval
+    :return: Serializable results object
+    """
+    if type(results) == dict:
+        return all_ndarrays_in_dict_2_lists(results)
+
+
+def all_ndarrays_in_dict_2_lists(d):
+    """
+    Recursively iterates over a dict and transforms all ndarrays to lists
+    :param d: dict
+    :return: dict
+    """
+    for k,v in d.items():
+        if type(v) == np.ndarray:
+            d[k] = v.tolist()
+        if type(v) == dict:
+            d[k] = all_ndarrays_in_dict_2_lists(v)
+    return d
+
+
 # Set params for SentEval
 params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 5}
 params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
@@ -206,6 +230,6 @@ if __name__ == "__main__":
     results = se.eval(transfer_tasks)
     filename = generate_filename(ENCODER_URL)
     outfile = open(filename, "w")
-    outfile.write(json.dumps(results))
+    outfile.write(json.dumps(serialization_helper(results)))
     outfile.close()
     logger.info('Evaluation of {} finished.'.format(ENCODER_URL))
