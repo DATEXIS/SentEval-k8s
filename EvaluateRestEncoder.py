@@ -15,6 +15,7 @@ import logging
 
 # Set PATHs
 import requests
+import urllib3
 
 from SIF.src import SIF_embedding
 
@@ -26,7 +27,7 @@ REQUEST_HEADERS = {
     'Content-Type': 'application/json'
 }
 PATH_TO_RESULTS = 'results/'
-MAX_CONNECTION_RETRIES = 30
+MAX_CONNECTION_RETRIES = 300
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +118,8 @@ def get_vectors_from_encoder(batch):
             exit(2)
         try:
             r = requests.post(ENCODER_URL, headers=REQUEST_HEADERS, data=json.dumps(batch))
-        except requests.exceptions.ConnectionError:
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError,
+                requests.exceptions.ChunkedEncodingError) as e:
             time.sleep(5)
             logger.error("Error while connecting to encoder {}, attempt {}/{}".format(ENCODER_URL, retries,
                                                                                       MAX_CONNECTION_RETRIES))
@@ -179,7 +181,7 @@ def all_ndarrays_in_dict_2_lists(d):
     :param d: dict
     :return: dict
     """
-    for k,v in d.items():
+    for k, v in d.items():
         if type(v) == np.ndarray:
             d[k] = v.tolist()
         if type(v) == dict:
