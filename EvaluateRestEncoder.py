@@ -101,7 +101,7 @@ def average(word_vectors, term_frequencies):
             sentence_word_vectors.append(word_vectors[token_index])
             token_index += 1
         embeddings.append(np.average(sentence_word_vectors, axis=0))
-    return embeddings
+    return np.asarray(embeddings)
 
 
 def aggregate_token_vectors_to_sentence_vector(word_vectors, term_frequencies):
@@ -194,10 +194,14 @@ def batcher(params, batch):
 
 def generate_filename(encoder_url, encoder_mode, aggregation_mode):
     fn = re.sub(r'http[s]*://', ' ', encoder_url)
-    fn = fn.replace(':', '_')
+    fn = fn.replace(':', '-')
     fn = fn.replace('/', '-')
     fn = ''.join([c for c in fn if re.match(r'\w', c) or c == '-' or c == '_'])
-    fn = datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + fn + '.json'
+    if encoder_mode == EncoderType.TOKEN:
+        fn = datetime.datetime.now().strftime(
+            '%Y%m%d_%H%M%S') + '_' + encoder_mode.name + '_' + aggregation_mode.name + '_' + fn + '.json'
+    if encoder_mode == EncoderType.SENTENCE:
+        fn = datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_' + encoder_mode.name + '_' + fn + '.json'
     fn = PATH_TO_RESULTS + fn
     return fn
 
@@ -254,7 +258,6 @@ if __name__ == "__main__":
 
     if 'ENCODER_TYPE' not in config.keys():
         raise RuntimeError('ENCODERTYPE has not been specified or is invalid!')
-        exit(1)
     if config['ENCODER_TYPE'] == EncoderType.TOKEN:
         try:
             if os.environ['TOKENAGGREGATION'] == 'AVG':
@@ -266,7 +269,6 @@ if __name__ == "__main__":
                 "Aggregation mode (TOKENAGGREGATION) must be specified for token encoders (AVG or ARORA)!")
         if 'TOKEN_AGGREGATION_MODE' not in config.keys():
             raise RuntimeError('Invalid TOKENAGGREGATION config!')
-            exit(1)
     if not os.path.isdir(PATH_TO_RESULTS):
         raise RuntimeError('Result path {} not found!'.format(PATH_TO_RESULTS))
 
@@ -278,7 +280,7 @@ if __name__ == "__main__":
                       'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
                       'OddManOut', 'CoordinationInversion']
     results = se.eval(transfer_tasks)
-    filename = generate_filename(config['ENCODER_URL'])
+    filename = generate_filename(config['ENCODER_URL'], config['ENCODER_TYPE'], config['TOKEN_AGGREGATION_MODE'])
     outfile = open(filename, "w")
     outfile.write(json.dumps(serialization_helper(results)))
     outfile.close()
