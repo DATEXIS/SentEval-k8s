@@ -560,6 +560,26 @@ class TestEvaluateRestController(unittest.TestCase):
         for embedding, expected_embedding in zip(embeddings, self.arora['expected_embeddings_multi_sentence']):
             np.testing.assert_array_almost_equal(embedding, expected_embedding, decimal=8)
 
+    def test_average_embedding_single_sentence(self):
+        term_frequencies = [[0.3, 0.1, 0.1]]
+        token_vectors = [[4.0, 8.0, 15.0, 16.0], [23.0, 42.0, 4.0, 8.0], [15.0, 16.0, 23.0, 42.0]]
+        expected_average = np.reshape(np.array([14.0, 22.0, 14.0, 22.0]), (1, 4))
+        wrong_average = np.reshape(np.array([14.0, 22.1, 14.0001, 22.0]), (1, 4))
+        np.testing.assert_equal(EvaluateRestEncoder.average(token_vectors, term_frequencies), expected_average)
+        with np.testing.assert_raises(AssertionError):
+            np.testing.assert_equal(EvaluateRestEncoder.average(token_vectors, term_frequencies), wrong_average)
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_average_embedding_multi_sentence(self):
+        term_frequencies = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
+        token_vectors = [[4.0, 8.0, 15.0, 16.0], [23.0, 42.0, 4.0, 8.0], [15.0, 16.0, 23.0, 42.0], [1, 2, 3, 4],
+                         [4, 8, 15, 16], [5, 6, 7, 8]]
+        expected_average = np.array([[14.0, 22.0, 14.0, 22.0], [3.3333, 5.3333, 8.3333, 9.3333]])
+        wrong_average = np.array([[14.0, 22.1, 14.0, 22.0], [3.5, 5.3333, 8.3333, 9.3333]])
+        np.testing.assert_almost_equal(EvaluateRestEncoder.average(token_vectors, term_frequencies), expected_average,
+                                       decimal=4)
+        with np.testing.assert_raises(AssertionError):
+            np.testing.assert_almost_equal(EvaluateRestEncoder.average(token_vectors, term_frequencies), wrong_average,
+                                           decimal=4)
+
+    if __name__ == '__main__':
+        unittest.main()

@@ -9,6 +9,7 @@ import re
 import sys
 import time
 from collections import defaultdict
+from enum import Enum
 
 import numpy as np
 import logging
@@ -35,6 +36,16 @@ sys.path.insert(0, PATH_TO_SENTEVAL)
 import senteval
 
 
+class EncoderType(Enum):
+    TOKEN = 1
+    SENTENCE = 2
+
+
+class TokenAggregationMode(Enum):
+    AVG = 1
+    ARORA = 2
+
+
 def arora(word_vectors, term_frequencies, a=.001):
     """
     Aggregates a bag of word vectors to a single vector using
@@ -49,29 +60,55 @@ def arora(word_vectors, term_frequencies, a=.001):
 
     if type(word_vectors) is not list:
         raise TypeError('word_vectors must be a list of shape [n, dim]')
-
     if type(term_frequencies) is not list:
         raise TypeError('term_frequencies must be a list of shape [i, n]')
-
     num_sentences = len(term_frequencies)
     longest_sentence_count = max([len(sentence) for sentence in term_frequencies])
     term_weights = np.zeros((num_sentences, longest_sentence_count))
-
-    indices = np.zeros((num_sentences, longest_sentence_count), dtype=np.int)
-
-    index = 0
-    for s_i, sentence_term_frequencies in enumerate(term_frequencies):
-        for t_i, tf in enumerate(sentence_term_frequencies):
-            term_weights[s_i, t_i] = a / (a + tf)
-            indices[s_i, t_i] = index
-            index += 1
-
-    params = senteval.utils.dotdict({'rmpc': 1})  # remove 1st principal component
-
     # Arora expects ONE LARGE WORD VECTOR ARRAY and the INDICES MUST BE OUT OF THIS ARRAY FOR ALL SENTENCES!
+    indices = np.zeros((num_sentences, longest_sentence_count), dtype=np.int)
+    index = 0
+    for sentence_index, sentence_term_frequencies in enumerate(term_frequencies):
+        for token_index, token_frequency in enumerate(sentence_term_frequencies):
+            term_weights[sentence_index, token_index] = a / (a + token_frequency)
+            indices[sentence_index, token_index] = index
+            index += 1
+    params = senteval.utils.dotdict({'rmpc': 1})  # remove 1st principal component
     word_vectors = np.asarray(word_vectors, dtype=np.float64)
     embeddings = SIF_embedding.SIF_embedding(word_vectors, indices, term_weights, params)
     return embeddings
+
+
+def average(word_vectors, term_frequencies):
+    """
+        Aggregates a bag of word vectors to a single vector through averaging
+        Since word_vectors contain all vectors in a 2d array, the sentence split information must be performed by
+        the term_frequencies array.
+        :param word_vectors: list[n, dim]: ordered word vectors word n (for all sentences)
+        :param term_frequencies: list[i, n]: ordered term frequencies for sentence i and token n within that sentence
+        :return: [i, :] sentence embeddings for sentence i
+        """
+
+    if type(word_vectors) is not list:
+        raise TypeError('word_vectors must be a list of shape [n, dim]')
+    if type(term_frequencies) is not list:
+        raise TypeError('term_frequencies must be a list of shape [i, n]')
+    embeddings = []
+    token_index = 0
+    for sentence_term_frequencies in term_frequencies:
+        sentence_word_vectors = []
+        for _ in sentence_term_frequencies:
+            sentence_word_vectors.append(word_vectors[token_index])
+            token_index += 1
+        embeddings.append(np.average(sentence_word_vectors, axis=0))
+    return embeddings
+
+
+def aggregate_token_vectors_to_sentence_vector(word_vectors, term_frequencies):
+    if config['TOKEN_AGGREGATION_MODE'] == TokenAggregationMode.ARORA:
+        return arora(word_vectors, term_frequencies, a=0.001)
+    if config['TOKEN_AGGREGATION_MODE'] == TokenAggregationMode.AVG:
+        return average(word_vectors, term_frequencies)
 
 
 def tf_dictionary(samples):
@@ -114,14 +151,14 @@ def get_vectors_from_encoder(batch):
     while should_connect:
         retries += 1
         if retries > MAX_CONNECTION_RETRIES:
-            logger.error("Giving up on connecting to encoder {}".format(ENCODER_URL))
+            logger.error("Giving up on connecting to encoder {}".format(config['ENCODER_URL']))
             exit(2)
         try:
-            r = requests.post(ENCODER_URL, headers=REQUEST_HEADERS, data=json.dumps(batch))
+            r = requests.post(config['ENCODER_URL'], headers=REQUEST_HEADERS, data=json.dumps(batch))
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError,
                 requests.exceptions.ChunkedEncodingError) as e:
             time.sleep(5)
-            logger.error("Error while connecting to encoder {}, attempt {}/{}".format(ENCODER_URL, retries,
+            logger.error("Error while connecting to encoder {}, attempt {}/{}".format(config['ENCODER_URL'], retries,
                                                                                       MAX_CONNECTION_RETRIES))
             should_connect = True
         else:
@@ -149,13 +186,13 @@ def batcher(params, batch):
     for sentence_word_vectors in batch_word_vectors:
         for word_vector in sentence_word_vectors:
             batch_word_vectors_flattened.append(np.asarray(word_vector, dtype=np.float64))
-    if ENCODER_TYPE == 'TOKEN':
-        return arora(batch_word_vectors_flattened, batch_term_frequencies, a=0.001)
-    if ENCODER_TYPE == 'SENTENCE':
+    if config['ENCODER_TYPE'] == EncoderType.TOKEN:
+        return aggregate_token_vectors_to_sentence_vector(batch_word_vectors_flattened, batch_term_frequencies)
+    if config['ENCODER_TYPE'] == EncoderType.SENTENCE:
         return batch_word_vectors
 
 
-def generate_filename(encoder_url):
+def generate_filename(encoder_url, encoder_mode, aggregation_mode):
     fn = re.sub(r'http[s]*://', ' ', encoder_url)
     fn = fn.replace(':', '_')
     fn = fn.replace('/', '-')
@@ -198,27 +235,38 @@ params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 12
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
 if __name__ == "__main__":
-    ENCODER_URL = ''
-    ENCODER_TYPE = ''
+    config = {}
+
     try:
-        ENCODER_URL = os.environ['ENCODERURL']
+        config['ENCODER_URL'] = os.environ['ENCODERURL']
     except KeyError:
         logger.error("Encoder URL must be specified using the ENCODERURL environment variable!")
         exit(1)
+
     try:
-        ENCODER_TYPE = os.environ['ENCODERTYPE']
+        if os.environ['ENCODERTYPE'] == 'TOKEN':
+            config['ENCODER_TYPE'] = EncoderType.TOKEN
+        if os.environ['ENCODERTYPE'] == 'SENTENCE':
+            config['ENCODER_TYPE'] = EncoderType.SENTENCE
     except KeyError:
         logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
         exit(1)
 
-    if len(ENCODER_URL) == 0 or len(ENCODER_TYPE) == 0:
-        raise RuntimeError(
-            'ENCODER_URL ("{}") or ENCODER_TYPE ("{}") have not been specified'.format(ENCODER_URL, ENCODER_TYPE))
-
-    if not (ENCODER_TYPE == "TOKEN" or ENCODER_TYPE == "SENTENCE"):
-        logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
+    if 'ENCODER_TYPE' not in config.keys():
+        raise RuntimeError('ENCODERTYPE has not been specified or is invalid!')
         exit(1)
-
+    if config['ENCODER_TYPE'] == EncoderType.TOKEN:
+        try:
+            if os.environ['TOKENAGGREGATION'] == 'AVG':
+                config['TOKEN_AGGREGATION_MODE'] = TokenAggregationMode.AVG
+            if os.environ['TOKENAGGREGATION'] == 'ARORA':
+                config['TOKEN_AGGREGATION_MODE'] = TokenAggregationMode.ARORA
+        except KeyError:
+            logger.error(
+                "Aggregation mode (TOKENAGGREGATION) must be specified for token encoders (AVG or ARORA)!")
+        if 'TOKEN_AGGREGATION_MODE' not in config.keys():
+            raise RuntimeError('Invalid TOKENAGGREGATION config!')
+            exit(1)
     if not os.path.isdir(PATH_TO_RESULTS):
         raise RuntimeError('Result path {} not found!'.format(PATH_TO_RESULTS))
 
@@ -230,8 +278,8 @@ if __name__ == "__main__":
                       'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
                       'OddManOut', 'CoordinationInversion']
     results = se.eval(transfer_tasks)
-    filename = generate_filename(ENCODER_URL)
+    filename = generate_filename(config['ENCODER_URL'])
     outfile = open(filename, "w")
     outfile.write(json.dumps(serialization_helper(results)))
     outfile.close()
-    logger.info('Evaluation of {} finished.'.format(ENCODER_URL))
+    logger.info('Evaluation of {} finished.'.format(config['ENCODER_URL']))
