@@ -233,6 +233,19 @@ def all_ndarrays_in_dict_2_lists(d):
 # Set up logger
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
+
+def add_evaluation_parameter_infos_to_result(senteval_results, senteval_params, general_params):
+    senteval_results['evaluation-parameters'] = {}
+    with open('commit-hash.txt', 'r') as f:
+        results['evaluation-parameters']['build'] = f.read().split()[0]
+    senteval_results['evaluation-parameters']['datetime-finished'] = str(datetime.datetime.now())
+    senteval_results['evaluation-parameters']['encoder-url'] = general_params['ENCODER_URL']
+    senteval_results['evaluation-parameters']['encoder-type'] = general_params['ENCODER_TYPE'].name
+    senteval_results['evaluation-parameters']['token-aggregation-type'] = general_params['TOKEN_AGGREGATION_MODE'].name
+    senteval_results['evaluation-parameters']['senteval'] = senteval_params
+    return senteval_results
+
+
 if __name__ == "__main__":
     config = {}
 
@@ -290,6 +303,7 @@ if __name__ == "__main__":
                       'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
                       'OddManOut', 'CoordinationInversion']
     results = se.eval(transfer_tasks)
+    results = add_evaluation_parameter_infos_to_result(results, params_senteval, config)
     filename = generate_filename(config['ENCODER_URL'], config['ENCODER_TYPE'], config['TOKEN_AGGREGATION_MODE'])
     outfile = open(filename, "w")
     outfile.write(json.dumps(serialization_helper(results)))
