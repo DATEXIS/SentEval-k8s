@@ -230,11 +230,6 @@ def all_ndarrays_in_dict_2_lists(d):
     return d
 
 
-# Set params for SentEval
-params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 5}
-params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
-                                 'tenacity': 3, 'epoch_size': 2}
-
 # Set up logger
 logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
@@ -271,6 +266,21 @@ if __name__ == "__main__":
             raise RuntimeError('Invalid TOKENAGGREGATION config!')
     if not os.path.isdir(PATH_TO_RESULTS):
         raise RuntimeError('Result path {} not found!'.format(PATH_TO_RESULTS))
+
+    try:
+        # Set params for SentEval
+        params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': int(os.environ['SENTEVAL_KFOLD']),
+                           'classifier': {
+                               'nhid': int(os.environ['SENTEVAL_CLASSIFIER_NHID']),
+                               'optim': os.environ['SENTEVAL_CLASSIFIER_OPTIM'],
+                               'batch_size': int(os.environ['SENTEVAL_CLASSIFIER_BATCHSIZE']),
+                               'tenacity': int(os.environ['SENTEVAL_CLASSIFIER_TENACITY']),
+                               'epoch_size': int(os.environ['SENTEVAL_CLASSIFIER_EPOCHSIZE']),
+                               'dropout': float(os.environ['SENTEVAL_CLASSIFIER_DROPOUT'])
+                           }}
+    except KeyError as e:
+        logger.error('Invalid parameter config for {}!'.format(e.args[0]))
+        exit(1)
 
     se = senteval.engine.SE(params_senteval, batcher, prepare)
     transfer_tasks = ['STS12', 'STS13', 'STS14', 'STS15', 'STS16',
