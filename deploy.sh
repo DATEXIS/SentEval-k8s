@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
 ./build.sh
-docker build -t registry.beuth-hochschule.de/toberhauser/senteval-k8s .
-docker push registry.beuth-hochschule.de/toberhauser/senteval-k8s
+
+# build image
+IMAGE=registry.datexis.com/toberhauser/senteval-gpu
+docker build -t $IMAGE .
+version=`cat VERSION`
+echo "version: $version"
+
+docker build -t $IMAGE .
+docker tag $IMAGE:latest $IMAGE:$version
+docker push $IMAGE
