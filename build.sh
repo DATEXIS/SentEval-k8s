@@ -14,3 +14,6 @@ cd ../../../
 # build image
 IMAGE=senteval-gpu
 docker build -t $IMAGE .
+version=`cat VERSION`
+echo "version: $version"
+docker tag $IMAGE:latest $IMAGE:$version

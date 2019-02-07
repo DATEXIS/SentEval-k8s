@@ -31,9 +31,6 @@ RUN pip3 install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 
 WORKDIR /root/
 
-# SentEval
-# RUN git clone https://github.com/devfoo-one/SentEval.git
-
 COPY . /root/
 
 # download dataset and models
