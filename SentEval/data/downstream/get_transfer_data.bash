@@ -235,7 +235,7 @@ done
 ### download MRPC
 mkdir $data_path/MRPC
 curl -Lo $data_path/MRPC/msr_paraphrase_train.txt https://dl.fbaipublicfiles.com/senteval/senteval_data/msr_paraphrase_train.txt
-curl curl -Lo $data_path/MRPC/msr_paraphrase_test.txt https://dl.fbaipublicfiles.com/senteval/senteval_data/msr_paraphrase_test.txt
+curl -Lo $data_path/MRPC/msr_paraphrase_test.txt https://dl.fbaipublicfiles.com/senteval/senteval_data/msr_paraphrase_test.txt
 
 
 # remove moses folder
