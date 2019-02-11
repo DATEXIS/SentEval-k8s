@@ -30,6 +30,7 @@ REQUEST_HEADERS = {
 PATH_TO_RESULTS = 'results/'
 MAX_CONNECTION_RETRIES = 300
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, PATH_TO_SENTEVAL)
