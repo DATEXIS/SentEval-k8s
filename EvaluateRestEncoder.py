@@ -182,15 +182,15 @@ def batcher(params, batch):
         for token in sent:
             sent_tf.append(params.tf_dictionary[token])
         batch_term_frequencies.append(sent_tf)
-    batch_word_vectors = get_vectors_from_encoder(batch)
+    batch_vectors = get_vectors_from_encoder(batch)
     batch_word_vectors_flattened = []
-    for sentence_word_vectors in batch_word_vectors:
+    for sentence_word_vectors in batch_vectors:
         for word_vector in sentence_word_vectors:
             batch_word_vectors_flattened.append(np.asarray(word_vector, dtype=np.float64))
     if config['ENCODER_TYPE'] == EncoderType.TOKEN:
         return aggregate_token_vectors_to_sentence_vector(batch_word_vectors_flattened, batch_term_frequencies)
     if config['ENCODER_TYPE'] == EncoderType.SENTENCE:
-        return batch_word_vectors
+        return np.asarray(batch_vectors, dtype=np.float64)
 
 
 def generate_filename(encoder_url, encoder_mode, aggregation_mode):
