@@ -45,6 +45,7 @@ class EncoderType(Enum):
 class TokenAggregationMode(Enum):
     AVG = 1
     ARORA = 2
+    NOAGG = 3
 
 
 def arora(word_vectors, term_frequencies, a=.001):
@@ -261,6 +262,7 @@ if __name__ == "__main__":
             config['ENCODER_TYPE'] = EncoderType.TOKEN
         if os.environ['ENCODERTYPE'] == 'SENTENCE':
             config['ENCODER_TYPE'] = EncoderType.SENTENCE
+            config['TOKEN_AGGREGATION_MODE'] = TokenAggregationMode.NOAGG
     except KeyError:
         logger.error("Encoder type (TOKEN or SENTENCE) must be specified using the ENCODERTYPE environment variable!")
         exit(1)
