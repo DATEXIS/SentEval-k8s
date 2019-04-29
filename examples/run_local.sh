@@ -3,9 +3,9 @@
 export NV_GPU='0'
 #export NV_GPU='6,7'
 docker run --runtime=nvidia \
--e ENCODERURL='http://datexis-worker15:31022/v2/embed/sentences/top' \
--e ENCODERTYPE='TOKEN' \
--e TOKENAGGREGATION='AVG' \
+-e ENCODERURL='http://141.64.184.124:2342/embed/sentences' \
+-e ENCODERTYPE='SENTENCE' \
+-e TOKENAGGREGATION='NONE' \
 -e SENTEVAL_KFOLD='10' \
 -e SENTEVAL_CLASSIFIER_NHID='0' \
 -e SENTEVAL_CLASSIFIER_OPTIM='adam' \
