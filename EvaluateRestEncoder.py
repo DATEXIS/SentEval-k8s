@@ -150,6 +150,7 @@ def get_vectors_from_encoder(batch):
     """
     should_connect = True
     retries = 0
+    vectors = []
     while should_connect:
         retries += 1
         if retries > MAX_CONNECTION_RETRIES:
@@ -157,15 +158,23 @@ def get_vectors_from_encoder(batch):
             exit(2)
         try:
             r = requests.post(config['ENCODER_URL'], headers=REQUEST_HEADERS, data=json.dumps(batch))
+            if r.status_code != 200:
+                time.sleep(5)
+                logger.error("Got status code {} from encoder {}, attempt {}/{}".format(r.status_code, config['ENCODER_URL'], retries,
+                                                                                      MAX_CONNECTION_RETRIES))
+                continue
+            vectors = r.json()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError,
                 requests.exceptions.ChunkedEncodingError) as e:
             time.sleep(5)
             logger.error("Error while connecting to encoder {}, attempt {}/{}".format(config['ENCODER_URL'], retries,
                                                                                       MAX_CONNECTION_RETRIES))
-            should_connect = True
+        except ValueError:
+            time.sleep(5)
+            logger.error("Got invalid JSON from encoder {}, attempt {}/{}".format(config['ENCODER_URL'], retries,
+                                                                                      MAX_CONNECTION_RETRIES))
         else:
             should_connect = False
-    vectors = r.json()
     if len(batch) == 1:  # TODO https://github.com/SchmaR/ELMo-Rest/issues/8
         vectors = [vectors]
     return vectors
