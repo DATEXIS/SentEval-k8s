@@ -301,14 +301,17 @@ if __name__ == "__main__":
 
     config['LOGLEVEL'] = os.getenv('LOGLEVEL', 'ERROR')
     logging.basicConfig(level=config['LOGLEVEL'])
-    logger.info("Starting SentEval for {}".format(config['ENCODER_URL']))
+
+    config['TASKS'] = os.getenv('TASKS', 'STS12, STS13, STS14, STS15, STS16, MR, CR, MPQA, SUBJ, SST2, SST5, TREC,'
+                                         'MRPC, SICKEntailment, SICKRelatedness, STSBenchmark, Length, WordContent, '
+                                         'Depth,TopConstituents, BigramShift, Tense, SubjNumber, ObjNumber, '
+                                         'OddManOut, CoordinationInversion')
+    config['TASKS'] = [x.strip() for x in config['TASKS'].split(',')]
+
+    logger.info('Starting SentEval for {}'.format(config['ENCODER_URL']))
+    logger.info('Tasks: {}'.format(', '.join(config['TASKS'])))
     se = senteval.engine.SE(params_senteval, batcher, prepare)
-    transfer_tasks = ['STS12', 'STS13', 'STS14', 'STS15', 'STS16',
-                      'MR', 'CR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC',
-                      'SICKEntailment', 'SICKRelatedness', 'STSBenchmark',
-                      'Length', 'WordContent', 'Depth', 'TopConstituents',
-                      'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
-                      'OddManOut', 'CoordinationInversion']
+    transfer_tasks = config['TASKS']
     results = se.eval(transfer_tasks)
     results = add_evaluation_parameter_infos_to_result(results, params_senteval, config)
     filename = generate_filename(config['ENCODER_URL'], config['ENCODER_TYPE'], config['TOKEN_AGGREGATION_MODE'])
