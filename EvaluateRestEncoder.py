@@ -30,7 +30,6 @@ REQUEST_HEADERS = {
 PATH_TO_RESULTS = 'results/'
 MAX_CONNECTION_RETRIES = 300
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, PATH_TO_SENTEVAL)
@@ -241,10 +240,6 @@ def all_ndarrays_in_dict_2_lists(d):
     return d
 
 
-# Set up logger
-logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
-
-
 def add_evaluation_parameter_infos_to_result(senteval_results, senteval_params, general_params):
     senteval_results['evaluation-parameters'] = {}
     with open('commit-hash.txt', 'r') as f:
@@ -280,15 +275,12 @@ if __name__ == "__main__":
         raise RuntimeError('ENCODERTYPE has not been specified or is invalid!')
     if config['ENCODER_TYPE'] == EncoderType.TOKEN:
         try:
-            if os.environ['TOKENAGGREGATION'] == 'AVG':
-                config['TOKEN_AGGREGATION_MODE'] = TokenAggregationMode.AVG
-            if os.environ['TOKENAGGREGATION'] == 'ARORA':
-                config['TOKEN_AGGREGATION_MODE'] = TokenAggregationMode.ARORA
+            config['TOKEN_AGGREGATION_MODE'] = {
+                'AVG': TokenAggregationMode.AVG,
+                'ARORA': TokenAggregationMode.ARORA}[os.environ['TOKENAGGREGATION']]
         except KeyError:
-            logger.error(
-                "Aggregation mode (TOKENAGGREGATION) must be specified for token encoders (AVG or ARORA)!")
-        if 'TOKEN_AGGREGATION_MODE' not in config.keys():
-            raise RuntimeError('Invalid TOKENAGGREGATION config!')
+            logger.error("Aggregation mode (TOKENAGGREGATION) must be specified for token encoders (AVG or ARORA)!")
+            exit(1)
     if not os.path.isdir(PATH_TO_RESULTS):
         raise RuntimeError('Result path {} not found!'.format(PATH_TO_RESULTS))
 
@@ -307,6 +299,9 @@ if __name__ == "__main__":
         logger.error('Invalid parameter config for {}!'.format(e.args[0]))
         exit(1)
 
+    config['LOGLEVEL'] = os.getenv('LOGLEVEL', 'ERROR')
+    logging.basicConfig(level=config['LOGLEVEL'])
+    logger.info("Starting SentEval for {}".format(config['ENCODER_URL']))
     se = senteval.engine.SE(params_senteval, batcher, prepare)
     transfer_tasks = ['STS12', 'STS13', 'STS14', 'STS15', 'STS16',
                       'MR', 'CR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC',
