@@ -13,4 +13,5 @@ docker run --runtime=nvidia \
 -e SENTEVAL_CLASSIFIER_TENACITY='5' \
 -e SENTEVAL_CLASSIFIER_EPOCHSIZE='4' \
 -e SENTEVAL_CLASSIFIER_DROPOUT='0.0' \
--v $(pwd)/results:/root/results senteval-gpu
+-e LOGLEVEL='INFO' \
+-v $(pwd)/results:/root/results senteval-gpu:1.2.0

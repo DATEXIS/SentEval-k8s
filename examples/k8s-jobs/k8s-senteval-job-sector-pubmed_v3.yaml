@@ -15,7 +15,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job-pappu-fasttext-concat
+  name: senteval-job-pubmed-sector-v3
 spec:
   template:
     spec:
@@ -27,7 +27,7 @@ spec:
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://cluster.datexis.com:30645/embed/sentences"
+            value: "http://cluster.datexis.com:32056/v2/encode/tokens"
           - name: ENCODERTYPE
             value: "SENTENCE"
           - name: TOKENAGGREGATION
@@ -51,7 +51,6 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: 1
-            memory: 16Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
