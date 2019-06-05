@@ -1,4 +1,5 @@
 # data files
 data/downstream/**
 !data/downstream/get_transfer_data.bash
+!data/downstream/get_pubmed-wikisection_data.bash
 !data/downstream/tokenizer.sed

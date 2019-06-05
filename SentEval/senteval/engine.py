@@ -22,6 +22,8 @@ from senteval.sts import STS12Eval, STS13Eval, STS14Eval, STS15Eval, STS16Eval, 
 from senteval.sst import SSTEval
 from senteval.rank import ImageCaptionRetrievalEval
 from senteval.probing import *
+from senteval.pubmedsection import PubMedSectionEval
+
 
 class SE(object):
     def __init__(self, params, batcher, prepare=None):
@@ -51,7 +53,7 @@ class SE(object):
                            'STS14', 'STS15', 'STS16',
                            'Length', 'WordContent', 'Depth', 'TopConstituents',
                            'BigramShift', 'Tense', 'SubjNumber', 'ObjNumber',
-                           'OddManOut', 'CoordinationInversion']
+                           'OddManOut', 'CoordinationInversion', 'PubMedSection', 'WikiSection']
 
     def eval(self, name):
         # evaluate on evaluation [name], either takes string or list of strings
@@ -92,6 +94,12 @@ class SE(object):
             self.evaluation = eval(name + 'Eval')(tpath + '/downstream/STS/' + fpath, seed=self.params.seed)
         elif name == 'ImageCaptionRetrieval':
             self.evaluation = ImageCaptionRetrievalEval(tpath + '/downstream/COCO', seed=self.params.seed)
+        elif name == 'PubMedSection':
+            self.evaluation = PubMedSectionEval(tpath + '/downstream/PubMedSection', seed=self.params.seed,                                        evalType='PubMedSection')
+        elif name == 'WikiSection':
+            self.evaluation = PubMedSectionEval(tpath + '/downstream/WikiSection', seed=self.params.seed,
+                                                evalType='WikiSection')
+
 
         # Probing Tasks
         elif name == 'Length':

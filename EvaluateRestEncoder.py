@@ -305,7 +305,7 @@ if __name__ == "__main__":
     config['TASKS'] = os.getenv('TASKS', 'STS12, STS13, STS14, STS15, STS16, MR, CR, MPQA, SUBJ, SST2, SST5, TREC,'
                                          'MRPC, SICKEntailment, SICKRelatedness, STSBenchmark, Length, WordContent, '
                                          'Depth,TopConstituents, BigramShift, Tense, SubjNumber, ObjNumber, '
-                                         'OddManOut, CoordinationInversion')
+                                         'OddManOut, CoordinationInversion, PubMedSection, WikiSection')
     config['TASKS'] = [x.strip() for x in config['TASKS'].split(',')]
 
     logger.info('Starting SentEval for {}'.format(config['ENCODER_URL']))

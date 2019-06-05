@@ -74,7 +74,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Tom Oberhauser** - *Initial work*
+* **[Tom Oberhauser](https://github.com/devfoo-one)** - *Initial work*
+* **[Paul Grundmann](https://github.com/Sunkua)**     - *Integration of PubMedSection and WikiSection tasks*
 
 ## License
 

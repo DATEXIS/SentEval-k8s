@@ -21,7 +21,10 @@ RUN apt-get update && apt-get install -y \
   cabextract \
   sudo \
   curl \
-  unzip
+  unzip \
+&& rm -rf /var/lib/apt/lists/*
+
+
 
 # install dependencies
 RUN pip3 install scikit-learn sklearn torch requests
@@ -32,6 +35,9 @@ RUN pip3 install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 WORKDIR /root/
 
 COPY . /root/
+
+ENV LANG C.UTF-8
+
 
 # download dataset and models
 
