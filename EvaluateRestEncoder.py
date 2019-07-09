@@ -164,7 +164,7 @@ def get_vectors_from_encoder(batch):
                 continue
             vectors = r.json()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError,
-                requests.exceptions.ChunkedEncodingError) as e:
+                requests.exceptions.ChunkedEncodingError, urllib3.exceptions.ReadTimeoutError) as e:
             time.sleep(5)
             logger.error("Error while connecting to encoder {}, attempt {}/{}".format(config['ENCODER_URL'], retries,
                                                                                       MAX_CONNECTION_RETRIES))
