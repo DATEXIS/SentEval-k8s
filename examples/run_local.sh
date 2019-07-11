@@ -15,4 +15,5 @@ docker run --runtime=nvidia \
 -e SENTEVAL_CLASSIFIER_DROPOUT='0.0' \
 -e TASKS='WikiSection, PubMedSection' \
 -e LOGLEVEL='DEBUG' \
+-e TIMEOUT='20.0'
 -v $(pwd)/results:/root/results senteval-gpu:latest

@@ -156,7 +156,7 @@ def get_vectors_from_encoder(batch):
             logger.error("Giving up on connecting to encoder {}".format(config['ENCODER_URL']))
             exit(2)
         try:
-            r = requests.post(config['ENCODER_URL'], headers=REQUEST_HEADERS, data=json.dumps(batch))
+            r = requests.post(config['ENCODER_URL'], headers=REQUEST_HEADERS, data=json.dumps(batch), timeout=config['TIMEOUT'])
             if r.status_code != 200:
                 time.sleep(5)
                 logger.error("Got status code {} from encoder {}, attempt {}/{}".format(r.status_code, config['ENCODER_URL'], retries,
@@ -164,7 +164,7 @@ def get_vectors_from_encoder(batch):
                 continue
             vectors = r.json()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError,
-                requests.exceptions.ChunkedEncodingError) as e:
+                requests.exceptions.ChunkedEncodingError, urllib3.exceptions.ReadTimeoutError, requests.exceptions.ReadTimeout) as e:
             time.sleep(5)
             logger.error("Error while connecting to encoder {}, attempt {}/{}".format(config['ENCODER_URL'], retries,
                                                                                       MAX_CONNECTION_RETRIES))
@@ -307,8 +307,10 @@ if __name__ == "__main__":
                                          'Depth,TopConstituents, BigramShift, Tense, SubjNumber, ObjNumber, '
                                          'OddManOut, CoordinationInversion, PubMedSection, WikiSection')
     config['TASKS'] = [x.strip() for x in config['TASKS'].split(',')]
+    config['TIMEOUT'] = float(os.getenv('TIMEOUT', '30.0'))
 
     logger.info('Starting SentEval for {}'.format(config['ENCODER_URL']))
+    logger.info('Encoder timeout is set to {} seconds'.format(config['TIMEOUT']))
     logger.info('Tasks: {}'.format(', '.join(config['TASKS'])))
     se = senteval.engine.SE(params_senteval, batcher, prepare)
     transfer_tasks = config['TASKS']
