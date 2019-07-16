@@ -1,23 +1,23 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job
+  name: senteval-job-weaver-fasttext-sec-max
 spec:
   template:
     spec:
       containers:
       - name: senteval-gpu
-        image: registry.datexis.com/toberhauser/senteval-gpu:1.3.1
+        image: registry.datexis.com/rschneider/senteval-gpu:1.0.3
         volumeMounts:
           -  name: senteval-results-claim
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://141.64.184.124:5042/embed/sentences"
+            value: "http://cluster.datexis.com:31418/v2/encode/tokens"
           - name: ENCODERTYPE
-            value: "TOKEN"
+            value: "SENTENCE"
           - name: TOKENAGGREGATION
-            value: "AVG"
+            value: "NONE"
           - name: SENTEVAL_KFOLD
             value: "10"
           - name: SENTEVAL_CLASSIFIER_NHID
@@ -32,18 +32,17 @@ spec:
             value: "4"
           - name: SENTEVAL_CLASSIFIER_DROPOUT
             value: "0.0"
-          - name: LOGLEVEL
-            value: "DEBUG"
-          - name: TASKS
-            value: "STS12, STS13"
         resources:
+          requests:
+            memory: 10Gi
           limits:
             nvidia.com/gpu: 1
+            memory: 10Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
       nodeSelector:
-        gpu: k80
+        gpu: p100
       volumes:
         - name: senteval-results-claim
           persistentVolumeClaim:

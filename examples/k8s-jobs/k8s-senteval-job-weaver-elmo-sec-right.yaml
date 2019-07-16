@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job
+  name: senteval-weaver-wikisec-elmo-0-2-preserving-lr-decay-right
 spec:
   template:
     spec:
@@ -13,11 +13,11 @@ spec:
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://141.64.184.124:5042/embed/sentences"
+            value: "http://cluster.datexis.com:30761/v2/encode/tokens"
           - name: ENCODERTYPE
-            value: "TOKEN"
+            value: "SENTENCE"
           - name: TOKENAGGREGATION
-            value: "AVG"
+            value: "NONE"
           - name: SENTEVAL_KFOLD
             value: "10"
           - name: SENTEVAL_CLASSIFIER_NHID
@@ -32,18 +32,17 @@ spec:
             value: "4"
           - name: SENTEVAL_CLASSIFIER_DROPOUT
             value: "0.0"
-          - name: LOGLEVEL
-            value: "DEBUG"
-          - name: TASKS
-            value: "STS12, STS13"
         resources:
+          requests:
+            memory: 10Gi
           limits:
             nvidia.com/gpu: 1
+            memory: 10Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
       nodeSelector:
-        gpu: k80
+        gpu: p100
       volumes:
         - name: senteval-results-claim
           persistentVolumeClaim:

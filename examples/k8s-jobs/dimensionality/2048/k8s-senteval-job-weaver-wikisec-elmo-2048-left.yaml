@@ -1,23 +1,28 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job
+  name: senteval-weaver-wikisec-elmo-2048-left
 spec:
   template:
+    metadata:
+      labels:
+        app: senteval
+        experiment: dimensionality
     spec:
       containers:
       - name: senteval-gpu
-        image: registry.datexis.com/toberhauser/senteval-gpu:1.3.1
+        image: registry.datexis.com/rschneider/senteval-gpu:2387837
         volumeMounts:
           -  name: senteval-results-claim
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://141.64.184.124:5042/embed/sentences"
+            value: "http://cluster.datexis.com:30337/v2/encode/tokens"
+            #            value: "http://$(WEAVER_WANG_HALF_ELMO_SEC_LEFT_REST_API_SERVICE_HOST):$(WEAVER_WANG_HALF_ELMO_SEC_LEFT_REST_API_SERVICE_PORT)/v2/encode/tokens"
           - name: ENCODERTYPE
-            value: "TOKEN"
+            value: "SENTENCE"
           - name: TOKENAGGREGATION
-            value: "AVG"
+            value: "NONE"
           - name: SENTEVAL_KFOLD
             value: "10"
           - name: SENTEVAL_CLASSIFIER_NHID
@@ -33,12 +38,15 @@ spec:
           - name: SENTEVAL_CLASSIFIER_DROPOUT
             value: "0.0"
           - name: LOGLEVEL
-            value: "DEBUG"
+            value: "INFO"
           - name: TASKS
-            value: "STS12, STS13"
+            value: "STS12, STS13, STS14, STS15, STS16, MR, CR, MPQA, SUBJ, SST2, SST5, TREC, MRPC, SICKEntailment, SICKRelatedness, STSBenchmark, Length, WordContent, Depth,TopConstituents, BigramShift, Tense, SubjNumber, ObjNumber, OddManOut, CoordinationInversion, WikiSection"
         resources:
+          requests:
+            memory: 20Gi
           limits:
             nvidia.com/gpu: 1
+            memory: 20Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
