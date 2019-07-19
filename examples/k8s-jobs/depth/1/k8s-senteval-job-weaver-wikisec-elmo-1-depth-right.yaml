@@ -1,19 +1,32 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job-elmo-pubmedsector-v3-concat
+  name: senteval-weaver-wikisec-elmo-1-depth-right
+  labels:
+    app: senteval
+    models: elmo-wikisector
+    experiment: depth
+    depth: "1"
+    vectorStrategy: takeRight
 spec:
   template:
+    metadata:
+      labels:
+        app: senteval
+        models: elmo-wikisector
+        experiment: depth
+        depth: "1"
+        vectorStrategy: takeRight
     spec:
       containers:
       - name: senteval-gpu
-        image: registry.datexis.com/rschneider/senteval-gpu:ffbf1a1
+        image: registry.datexis.com/rschneider/senteval-gpu:2387837
         volumeMounts:
           -  name: senteval-results-claim
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://cluster.datexis.com:30236/embed/sentences"
+            value: "http://cluster.datexis.com:32392/v2/encode/tokens"
           - name: ENCODERTYPE
             value: "SENTENCE"
           - name: TOKENAGGREGATION
@@ -33,17 +46,15 @@ spec:
           - name: SENTEVAL_CLASSIFIER_DROPOUT
             value: "0.0"
           - name: LOGLEVEL
-            value: "DEBUG"
+            value: "INFO"
           - name: TASKS
-            value: "WikiSection"
-          - name: TIMEOUT
-            value: "90"
+            value: "STS12, STS13, STS14, STS15, STS16, MR, CR, MPQA, SUBJ, SST2, SST5, TREC, MRPC, SICKEntailment, SICKRelatedness, STSBenchmark, Length, WordContent, Depth,TopConstituents, BigramShift, Tense, SubjNumber, ObjNumber, OddManOut, CoordinationInversion, WikiSection"
         resources:
           requests:
-            memory: 10Gi
+            memory: 20Gi
           limits:
             nvidia.com/gpu: 1
-            memory: 10Gi
+            memory: 20Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
