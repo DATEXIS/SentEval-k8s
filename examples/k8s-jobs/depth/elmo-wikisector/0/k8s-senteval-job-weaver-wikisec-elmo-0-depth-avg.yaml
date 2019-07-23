@@ -1,13 +1,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-weaver-wikisec-elmo-0-depth-max
+  name: senteval-weaver-wikisec-elmo-0-depth-avg
   labels:
     app: senteval
     models: elmo-wikisector
     experiment: depth
     depth: "0"
-    vectorStrategy: max
+    vectorStrategy: average
 spec:
   template:
     metadata:
@@ -16,17 +16,17 @@ spec:
         models: elmo-wikisector
         experiment: depth
         depth: "0"
-        vectorStrategy: max
+        vectorStrategy: average
     spec:
       containers:
       - name: senteval-gpu
-        image: registry.datexis.com/rschneider/senteval-gpu:2387837
+        image: registry.datexis.com/rschneider/senteval-gpu:1.4.1
         volumeMounts:
           -  name: senteval-results-claim
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://cluster.datexis.com:31447/v2/encode/tokens"
+            value: "http://cluster.datexis.com:30609/v2/encode/tokens"
           - name: ENCODERTYPE
             value: "SENTENCE"
           - name: TOKENAGGREGATION
@@ -47,6 +47,8 @@ spec:
             value: "0.0"
           - name: LOGLEVEL
             value: "INFO"
+          - name: TIMEOUT
+            value: "90"
         resources:
           requests:
             memory: 20Gi

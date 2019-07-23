@@ -1,12 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-weaver-wikisec-elmo-4-depth-avg
+  name: senteval-weaver-wikisec-elmo-3-depth-avg
   labels:
     app: senteval
     models: elmo-wikisector
     experiment: depth
-    depth: "4"
+    depth: "3"
     vectorStrategy: average
 spec:
   template:
@@ -15,7 +15,7 @@ spec:
         app: senteval
         models: elmo-wikisector
         experiment: depth
-        depth: "4"
+        depth: "3"
         vectorStrategy: average
     spec:
       containers:
@@ -26,7 +26,7 @@ spec:
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://cluster.datexis.com:31175/v2/encode/tokens"
+            value: "http://cluster.datexis.com:32433/v2/encode/tokens"
           - name: ENCODERTYPE
             value: "SENTENCE"
           - name: TOKENAGGREGATION
