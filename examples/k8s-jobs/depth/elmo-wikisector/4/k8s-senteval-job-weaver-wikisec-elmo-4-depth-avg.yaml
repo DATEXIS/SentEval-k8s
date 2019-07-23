@@ -1,19 +1,32 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: senteval-job-elmo-pubmedsector-v3-max
+  name: senteval-weaver-wikisec-elmo-4-depth-avg
+  labels:
+    app: senteval
+    models: elmo-wikisector
+    experiment: depth
+    depth: "4"
+    vectorStrategy: average
 spec:
   template:
+    metadata:
+      labels:
+        app: senteval
+        models: elmo-wikisector
+        experiment: depth
+        depth: "4"
+        vectorStrategy: average
     spec:
       containers:
       - name: senteval-gpu
-        image: registry.datexis.com/rschneider/senteval-gpu:ffbf1a1
+        image: registry.datexis.com/rschneider/senteval-gpu:2387837
         volumeMounts:
           -  name: senteval-results-claim
              mountPath: /root/results
         env:
           - name: ENCODERURL
-            value: "http://cluster.datexis.com:32011/embed/sentences"
+            value: "http://cluster.datexis.com:31175/v2/encode/tokens"
           - name: ENCODERTYPE
             value: "SENTENCE"
           - name: TOKENAGGREGATION
@@ -33,17 +46,13 @@ spec:
           - name: SENTEVAL_CLASSIFIER_DROPOUT
             value: "0.0"
           - name: LOGLEVEL
-            value: "DEBUG"
-          - name: TASKS
-            value: "WikiSection, PubMedSection"
-          - name: TIMEOUT
-            value: "90"
+            value: "INFO"
         resources:
           requests:
-            memory: 10Gi
+            memory: 20Gi
           limits:
             nvidia.com/gpu: 1
-            memory: 10Gi
+            memory: 20Gi
       imagePullSecrets:
         - name: private-registry-auth
       restartPolicy: Never
