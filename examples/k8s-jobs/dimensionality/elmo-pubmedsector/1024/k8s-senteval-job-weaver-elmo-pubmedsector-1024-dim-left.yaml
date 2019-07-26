@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: senteval-weaver-elmo-pubmedsector-1024-dim-left
+  labels:
+    app: senteval
+    models: elmo-pubmedsector
+    experiment: dimensionality
+    dimension: "1024"
+    vectorStrategy: takeLeft
+spec:
+  template:
+    metadata:
+      labels:
+        app: senteval
+        models: elmo-pubmedsector
+        experiment: dimensionality
+        dimension: "1024"
+        vectorStrategy: takeLeft
+    spec:
+      containers:
+      - name: senteval-gpu
+        image: registry.datexis.com/rschneider/senteval-gpu:1.4.1
+        volumeMounts:
+          -  name: senteval-results-claim
+             mountPath: /root/results
+        env:
+          - name: ENCODERURL
+            value: "http://cluster.datexis.com:30010/v2/encode/tokens"
+          - name: ENCODERTYPE
+            value: "SENTENCE"
+          - name: TOKENAGGREGATION
+            value: "NONE"
+          - name: SENTEVAL_KFOLD
+            value: "10"
+          - name: SENTEVAL_CLASSIFIER_NHID
+            value: "0"
+          - name: SENTEVAL_CLASSIFIER_OPTIM
+            value: "adam"
+          - name: SENTEVAL_CLASSIFIER_BATCHSIZE
+            value: "64"
+          - name: SENTEVAL_CLASSIFIER_TENACITY
+            value: "5"
+          - name: SENTEVAL_CLASSIFIER_EPOCHSIZE
+            value: "4"
+          - name: SENTEVAL_CLASSIFIER_DROPOUT
+            value: "0.0"
+          - name: LOGLEVEL
+            value: "INFO"
+          - name: TIMEOUT
+            value: "90"
+        resources:
+          requests:
+            memory: 20Gi
+          limits:
+            nvidia.com/gpu: 1
+            memory: 20Gi
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never
+      nodeSelector:
+        gpu: k80
+      volumes:
+        - name: senteval-results-claim
+          persistentVolumeClaim:
+            claimName: senteval-results-claim
