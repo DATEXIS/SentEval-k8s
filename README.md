@@ -81,7 +81,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## License
 
-TODO
+https://github.com/DATEXIS/SentEval-k8s/blob/master/LICENSE
 
 
 
