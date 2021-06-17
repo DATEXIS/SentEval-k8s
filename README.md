@@ -2,6 +2,8 @@
 
 A Kubernetes job to evaluate REST encoders with [SentEval](https://github.com/facebookresearch/SentEval/pulls).
 
+This Software uses parts of SentEval by Facebook Inc. Which is publised under a [BSD License](https://github.com/facebookresearch/SentEval/blob/master/LICENSE).
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -79,7 +81,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## License
 
-TODO
+https://github.com/DATEXIS/SentEval-k8s/blob/master/LICENSE
 
 
 
