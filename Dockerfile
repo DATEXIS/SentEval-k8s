@@ -6,37 +6,21 @@
 # Based on the SentEval image from https://github.com/loretoparisi/docker (Loreto Parisi <loretoparisi@gmail.com>)
 #
 
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-runtime
 
 MAINTAINER Tom Oberhauser <toberhauser@beuth-hochschule.de>
 
 # Install base packages
-RUN apt-get update && apt-get install -y \
-  git \
-  software-properties-common \
-  python3-dev \
-  python3-pip \
-  python3-numpy\
-  python3-scipy\
-  cabextract \
-  sudo \
-  curl \
-  unzip \
-&& rm -rf /var/lib/apt/lists/*
-
-
-
-# install dependencies
-RUN pip3 install scikit-learn sklearn torch requests
-RUN pip3 install --upgrade https://github.com/Theano/Theano/archive/master.zip
-RUN pip3 install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
-
+RUN apt-get update && apt-get install -y git
 
 WORKDIR /root/
 
 COPY . /root/
 
 ENV LANG C.UTF-8
+
+# install dependencies
+RUN pip install -r requirements.txt
 
 
 # download dataset and models
