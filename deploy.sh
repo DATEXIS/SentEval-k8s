@@ -8,6 +8,7 @@ version=`cat VERSION`
 echo "version: $version"
 githash=`git rev-parse --short HEAD`
 
+docker login -u $1 -p $2 registry.datexis.com
 docker build -t $IMAGE -t $IMAGE:$githash -t $IMAGE:$version .
 docker push $IMAGE
 docker push $IMAGE:$githash
